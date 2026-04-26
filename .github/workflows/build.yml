@@ -56,6 +56,19 @@ jobs:
         run: |
           ./patcher.ps1
 
+      - name: Patch vs_toolchain SDK check
+        # language=PowerShell
+        run: |
+          $f = "v8\build\vs_toolchain.py"
+          if (Test-Path $f) {
+            $c = Get-Content $f -Raw
+            $c = $c -replace 'def SDKIncludesIDCompositionDevice4\(\):', "def SDKIncludesIDCompositionDevice4():`r`n  return True`r`n  # patched-out original below"
+            Set-Content -Path $f -Value $c
+            Write-Host "Patched $f"
+          } else {
+            Write-Host "vs_toolchain.py not found, skipping"
+          }
+
       - name: Build D8
         id: build
         # language=PowerShell
