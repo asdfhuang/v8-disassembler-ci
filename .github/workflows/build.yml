@@ -27,15 +27,8 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install Windows SDK 10.0.22621
-        uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
-        with:
-          sdk-version: 22621
-
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
-        with:
-          sdk: 10.0.22621.0
 
       - name: Install depot_tools
         # language=PowerShell
@@ -63,17 +56,25 @@ jobs:
         run: |
           ./patcher.ps1
 
-      - name: Patch vs_toolchain SDK check
+      - name: Patch vs_toolchain SDK version
         # language=PowerShell
         run: |
+          # 1) Bypass dcomp.h SDK check
           $f = "v8\build\vs_toolchain.py"
           if (Test-Path $f) {
             $c = Get-Content $f -Raw
-            $c = $c -replace 'def SDKIncludesIDCompositionDevice4\(\):', "def SDKIncludesIDCompositionDevice4():`r`n  return True`r`n  # patched-out original below"
+            $c = $c -replace 'def SDKIncludesIDCompositionDevice4\(\):', "def SDKIncludesIDCompositionDevice4():`r`n  return True`r`n  # patched-out"
+            # 2) Replace hardcoded SDK version 10.0.22621.0 -> the latest installed (10.0.26100.0)
+            $c = $c -replace '10\.0\.22621\.0', '10.0.26100.0'
             Set-Content -Path $f -Value $c
-            Write-Host "Patched $f"
-          } else {
-            Write-Host "vs_toolchain.py not found, skipping"
+            Write-Host "Patched vs_toolchain.py"
+            Select-String -Path $f -Pattern '10\.0\.\d+\.0' | Select-Object -First 5
+          }
+          # Same in setup_toolchain.py (sometimes the version is duplicated)
+          $f2 = "v8\build\toolchain\win\setup_toolchain.py"
+          if (Test-Path $f2) {
+            (Get-Content $f2 -Raw) -replace '10\.0\.22621\.0', '10.0.26100.0' | Set-Content $f2
+            Write-Host "Patched setup_toolchain.py"
           }
 
       - name: Build D8
