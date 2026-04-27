@@ -96,10 +96,14 @@ jobs:
           v8_static_library = true
           v8_enable_disassembler = true
           v8_enable_object_print = true
-          v8_enable_sandbox = true
-          v8_enable_pointer_compression = true
-          v8_enable_pointer_compression_shared_cage = true
-          v8_enable_external_code_space = true
+          # Match Node 23 build flags (so we can deserialize Node-produced .jsc cache)
+          v8_enable_sandbox = false
+          v8_enable_pointer_compression = false
+          v8_enable_pointer_compression_shared_cage = false
+          v8_enable_external_code_space = false
+          v8_enable_extensible_ro_snapshot = false
+          v8_enable_javascript_promise_hooks = true
+          v8_use_siphash = true
           
           treat_warnings_as_errors = false
           "@
